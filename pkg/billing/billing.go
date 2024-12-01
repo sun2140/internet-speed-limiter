@@ -1,10 +1,7 @@
 package billing
 
 import (
-	"goraj/limited-network-driver/internal/mocks"
 	"goraj/limited-network-driver/pkg/clock"
-	"goraj/limited-network-driver/pkg/file"
-	"time"
 )
 
 const DateLayout = "01/02/2006"
@@ -108,28 +105,4 @@ func (billing *Billing) GetBillingPeriodCurrentDay() int {
 
 	// last month is too short
 	return currentDay
-}
-
-type PeriodTestCaseBuildFn func(time time.Time, billing *Billing) []byte
-
-func EveryPeriodGenerator(buildFn PeriodTestCaseBuildFn) file.Generator[[]byte] {
-	return func(yield func([]byte) bool) {
-		for year := 2023; year <= 2024; year++ {
-			for month := 1; month <= 12; month++ {
-				daysInMonth := time.Date(year, time.Month((month+1)%12), 1, 0, 0, 0, 0, time.UTC).AddDate(0, 0, -1).Day()
-				for day := 1; day <= daysInMonth; day++ {
-					for firstDay := 1; firstDay <= 31; firstDay++ {
-						currentDate := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
-
-						myClock := mocks.NewFakeClock(year, time.Month(month), day)
-						myBilling := NewBilling(myClock, firstDay)
-
-						if !yield(buildFn(currentDate, myBilling)) {
-							return
-						}
-					}
-				}
-			}
-		}
-	}
 }

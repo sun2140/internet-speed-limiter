@@ -20,14 +20,15 @@ type currentThresholdTestCase struct {
 }
 
 func CurrentThresholdDatasetGenerator() file.Generator[[]byte] {
-	return billing.EveryPeriodGenerator(func(currentDate time.Time, myBilling *billing.Billing) []byte {
+	return mocks.EveryPeriodGenerator(func(fakeClock *mocks.FakeClock, firstDay int) []byte {
+		myBilling := billing.NewBilling(fakeClock, firstDay)
 		billingPeriodDuration := myBilling.GetDaysInCurrentBillingPeriod()
 		monthData := billingPeriodDuration
 		expectedThreshold := (monthData / billingPeriodDuration) * myBilling.GetBillingPeriodCurrentDay()
 
 		testCase := currentThresholdTestCase{
-			CurrentDate:       currentDate.Format(billing.DateLayout),
-			FirstDay:          myBilling.FirstDay,
+			CurrentDate:       fakeClock.Now().Format(billing.DateLayout),
+			FirstDay:          firstDay,
 			MonthData:         monthData,
 			ExpectedThreshold: expectedThreshold,
 		}

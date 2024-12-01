@@ -19,11 +19,12 @@ type periodCurrentDayTestCase struct {
 }
 
 func periodCurrentDayDatasetGenerator() file.Generator[[]byte] {
-	return EveryPeriodGenerator(func(currentDate time.Time, myBilling *Billing) []byte {
+	return mocks.EveryPeriodGenerator(func(fakeClock *mocks.FakeClock, firstDay int) []byte {
+		myBilling := NewBilling(fakeClock, firstDay)
 		currentDayOfBillingPeriod := myBilling.GetBillingPeriodCurrentDay()
 
 		testCase := periodCurrentDayTestCase{
-			CurrentDate:               currentDate.Format(DateLayout),
+			CurrentDate:               fakeClock.Now().Format(DateLayout),
 			FirstDay:                  myBilling.FirstDay,
 			CurrentDayOfBillingPeriod: currentDayOfBillingPeriod,
 		}

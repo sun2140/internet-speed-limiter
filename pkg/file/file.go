@@ -10,21 +10,6 @@ import (
 
 type Generator[T any] func(yield func(T) bool)
 
-func WithOpen(filePath string, fn func(file *os.File) error) error {
-	file, err := os.Open(filePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			log.Fatalf("failed to close file: %v", err)
-		}
-	}(file)
-
-	return fn(file)
-}
-
 func ReadJsonLineAsStruct[T any](filePath string, model *T) Generator[*T] {
 
 	return func(yield func(*T) bool) {
