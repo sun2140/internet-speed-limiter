@@ -42,67 +42,70 @@ func (billing *Billing) getDaysInNextMonth() int {
 	return nextMonthLastDay.Day()
 }
 
-func (billing *Billing) GetDaysInCurrentBillingPeriod() int {
-	firstDay := billing.FirstDay
-	currentDay := billing.getDayOfMonth()
-
-	daysInPastMonth := billing.getDaysInPastMonth()
-	daysInCurrentMonth := billing.getDaysInMonth()
-	daysInNextMonth := billing.getDaysInNextMonth()
-
-	periodDaysPastMonth := 0
-	periodDaysCurrentMonth := 0
-	periodDaysNextMonth := 0
-
-	periodStartedLastMonth := firstDay > currentDay
-
-	if periodStartedLastMonth {
-		// From first day (included) to end of the last month
-		if firstDay <= daysInPastMonth {
-			periodDaysPastMonth = daysInPastMonth - firstDay + 1
-		}
-
-		// From begin of the month to first day (excluded)
-		if firstDay > daysInCurrentMonth {
-			periodDaysCurrentMonth = daysInCurrentMonth
-		} else {
-			periodDaysCurrentMonth = firstDay - 1
-		}
-	} else { // period started this month and end next month
-
-		// From first day (included) to the end of the month
-		periodDaysCurrentMonth = daysInCurrentMonth - firstDay + 1
-
-		// From begin of the next month  to first day (excluded)
-		if firstDay > daysInNextMonth {
-			periodDaysNextMonth = daysInNextMonth
-		} else {
-			periodDaysNextMonth = firstDay - 1
-		}
-	}
-
-	daysInCurrentBillingPeriod := periodDaysPastMonth + periodDaysCurrentMonth + periodDaysNextMonth
-	return daysInCurrentBillingPeriod
-}
-
 func (billing *Billing) GetBillingPeriodCurrentDay() int {
 	firstDay := billing.FirstDay
 	currentDay := billing.getDayOfMonth()
 
-	daysInPastMonth := billing.getDaysInPastMonth()
-
-	currentPeriodStartedThisMonth := currentDay >= firstDay
-
-	if currentPeriodStartedThisMonth {
+	if hasPeriodStartedThisMonth(currentDay, firstDay) {
 		return currentDay - firstDay + 1
 	}
 
-	// currentPeriodStartedLastMonth
-	periodFirstDayExistInPastMonth := firstDay <= daysInPastMonth
-	if periodFirstDayExistInPastMonth {
+	daysInPastMonth := billing.getDaysInPastMonth()
+	if firstDayExistInMonth(firstDay, daysInPastMonth) {
 		return daysInPastMonth - firstDay + 1 + currentDay
 	}
 
-	// last month is too short
 	return currentDay
+}
+
+func (billing *Billing) GetDaysInCurrentBillingPeriod() int {
+	firstDay := billing.FirstDay
+	currentDay := billing.getDayOfMonth()
+
+	periodDaysCurrentMonth := computeCurrentMonthPeriodDays(currentDay, firstDay, billing.getDaysInMonth())
+
+	if hasPeriodStartedPastMonth(currentDay, firstDay) {
+		return computePastMonthPeriodDays(currentDay, firstDay, billing.getDaysInPastMonth()) + periodDaysCurrentMonth
+	}
+	return computeNextMonthPeriodDays(currentDay, firstDay, billing.getDaysInNextMonth()) + periodDaysCurrentMonth
+}
+
+func computeCurrentMonthPeriodDays(currentDay, firstDay, daysInCurrentMonth int) int {
+	if hasPeriodStartedPastMonth(currentDay, firstDay) {
+		if firstDayExistInMonth(firstDay, daysInCurrentMonth) {
+			return firstDay - 1
+		}
+		return daysInCurrentMonth
+	}
+	return daysInCurrentMonth - firstDay + 1
+
+}
+
+func computePastMonthPeriodDays(currentDay, firstDay, daysInPastMonth int) int {
+	if hasPeriodStartedPastMonth(currentDay, firstDay) && firstDayExistInMonth(firstDay, daysInPastMonth) {
+		return daysInPastMonth - firstDay + 1
+	}
+	return 0
+}
+
+func computeNextMonthPeriodDays(currentDay, firstDay, daysInNextMonth int) int {
+	if hasPeriodStartedPastMonth(currentDay, firstDay) {
+		return 0
+	}
+	if firstDay > daysInNextMonth {
+		return daysInNextMonth
+	}
+	return firstDay - 1
+}
+
+func hasPeriodStartedThisMonth(currentDay, firstDay int) bool {
+	return !hasPeriodStartedPastMonth(currentDay, firstDay)
+}
+
+func hasPeriodStartedPastMonth(currentDay, firstDay int) bool {
+	return firstDay > currentDay
+}
+
+func firstDayExistInMonth(firstDay, monthDurationInDays int) bool {
+	return firstDay <= monthDurationInDays
 }
