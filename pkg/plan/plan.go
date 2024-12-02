@@ -26,8 +26,8 @@ func (plan *Plan) getCurrentThreshold(billing billing.Billing) int {
 	return threshold
 }
 
-func (plan *Plan) getSoftLimit(billing billing.Billing) int {
-	percentageSetting := int(plan.softLimit)
+func (plan *Plan) getSoftLimit(billing billing.Billing) float64 {
+	percentageSetting := float64(plan.softLimit)
 	threshold := plan.getCurrentThreshold(billing)
-	return threshold * percentageSetting / 100
+	return float64(threshold) * percentageSetting / float64(100)
 }

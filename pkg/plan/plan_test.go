@@ -83,4 +83,19 @@ func TestPlan(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("Get soft limit", func(t *testing.T) {
+		myClock := mocks.NewFakeClock(2024, time.February, 2)
+		myBilling := billing.NewBilling(myClock, 1)
+
+		plan := NewPlan(200000, 85)
+
+		actual := plan.getSoftLimit(*myBilling)
+
+		expected := 11723.2
+
+		if actual != expected {
+			t.Errorf("expected %v, got %v", actual, expected)
+		}
+	})
 }
